@@ -36,7 +36,6 @@
         "contract": "CDL74RF5BLYR2YBLCCI7F5FB6TPSCLKEJUBSD2RSVWZ4YHF3VMFAIGWA",
         "assetIssuer": "GBDVX4VELCDSQ54KQJYTNHXAHFLBCA77ZY2USQBM4CSHTTV7DME7KALE",
         "assetCode": "KALE",
-        "fees": 10000000,
         "debug": false,
         "launchtube": {
             "url": "https://launchtube.xyz",

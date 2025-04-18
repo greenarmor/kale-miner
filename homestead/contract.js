@@ -131,7 +131,7 @@ async function setupAsset(farmer) {
                 .addOperation(Operation.changeTrust({
                     asset: new Asset(code, issuer)
                 }))
-                .setTimeout(300)
+                .setTimeout(30)
                 .build();
             transaction.sign(Keypair.fromSecret(signers[farmer].secret));
             const response = await getResponse(await rpc.sendTransaction(transaction));
