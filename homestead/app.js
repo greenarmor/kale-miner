@@ -54,7 +54,7 @@ async function plant(key, blockData, next) {
             signers[key].stats.maxStake = Math.max(signers[key].stats.maxStake || 0, signers[key].stats.stake);
             console.log(`Farmer ${key} planted ${blockData.block} with ${Number(amount) / 10000000} KALE`);
         }
-    } catch(err) {
+    } catch (err) {
         const error = getError(err);
         console.error(`Farmer ${key} could not plant ${data.block} (next: ${next}): ${error}`);
         await new Promise(resolve => setTimeout(resolve, pollInterval));
@@ -118,7 +118,7 @@ async function work(mining, key, blockData, onStart) {
             signers[key].stats.minDiff = Math.min(signers[key].stats.minDiff || Number.MAX_VALUE, signers[key].difficulty);
             signers[key].stats.maxDiff = Math.max(signers[key].stats.maxDiff || 0, signers[key].difficulty);
             console.log(`Farmer ${key} submitted work [hash: ${signers[key].work.hash}, nonce: ${signers[key].work.nonce}, gap: ${value}] for ${blockData.block}`);
-        } catch(err) {
+        } catch (err) {
             delete signers[key].work;
             const error = getError(err);
             console.error(`Farmer ${key} could not submit work for block ${blockData.block}: ${error}`);
@@ -207,9 +207,9 @@ async function runFarm(interval) {
 
         let elapsedTime = computeElapsed();
         const hasElapsed = elapsedTime > 60 * 5 + 15;
-        const changed = result.block !== blockData.block;
+        const changed = result.block > blockData.block;
 
-        if ((changed && result.block > blockData.block) || hasElapsed) {
+        if ((changed > blockData.block) || hasElapsed) {
             if (changed) {
                 console.log(`New block detected ${result.block}`);
                 blockData.block = result.block;
@@ -345,7 +345,7 @@ async function updateStatus(key, block) {
                 logStatus(key);
             }
         }
-    } catch(err) {
+    } catch (err) {
         console.error(`Farmer ${key} status check failure ${block}: ${getError(err)}`);
     }
 }
