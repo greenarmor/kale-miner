@@ -5,6 +5,8 @@
 
 const express = require('express');
 const { invoke, hoard, blockData, balances, signers, session } = require('./contract');
+const config = require(process.env.CONFIG || './config.json');
+const { Harvester, parseRange } = require('./harvester');
 const router = express.Router();
 const path = require('path');
 
@@ -58,6 +60,34 @@ router.get('/harvest', async (req, res) => {
         res.json({ result: await invoke('harvest', { farmer, block }) }); 
     } catch (error) {
         res.status(500).send(error.message);
+    }
+});
+
+router.post('/tractor', async (req, res) => {
+    try {
+        if (config.harvester?.range) {
+            const { range, count } = parseRange(config.harvester.range);
+            for (const key in signers) {
+                if (range) {
+                    const [start, end] = range;
+                    for (let block = end; block >= start; block--) {
+                        Harvester.add(key, block, Date.now());
+                    }
+                    console.log(`Farmer ${key} checking blocks from ${start} to ${end} for harvest`);
+                } else if (count) {
+                    for (let i = 1; i <= count; i++) {
+                        Harvester.add(key, blockData.block - 1 - i, Date.now());
+                    }
+                    console.log(`Farmer ${key} checking blocks from ${blockData.block - 2} to ${blockData.block - count - 1} for harvest`);
+                }
+            }
+            await Harvester.flush(true);
+            return res.json({ result: true });
+        }
+        return res.status(400).send('Invalid config');
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send(error.message);
     }
 });
 
