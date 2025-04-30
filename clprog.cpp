@@ -40,14 +40,36 @@ void releaseResources(cl_context context, cl_command_queue commandQueue, cl_prog
     if (context) clReleaseContext(context);
 }
 
-extern "C" int executeKernel(int deviceId, std::uint8_t* data, int dataSize, std::uint64_t startNonce, int nonceOffset, std::uint64_t batchSize,
+static std::string getPlatform(cl_platform_id id) {
+    size_t len = 0;
+    CL_CALL(clGetPlatformInfo(id, CL_PLATFORM_NAME, 0, nullptr, &len));
+    std::vector<char> buf(len);
+    CL_CALL(clGetPlatformInfo(id, CL_PLATFORM_NAME, len, buf.data(), nullptr));
+    return std::string(buf.data(), buf.data() + len - 1);
+}
+
+extern "C" int executeKernel(const char* platform, int deviceId, std::uint8_t* data, int dataSize, std::uint64_t startNonce, int nonceOffset, std::uint64_t batchSize,
     int difficulty, int threadsPerBlock, std::uint8_t* output, std::uint64_t* validNonce, bool showDeviceInfo) {
     cl_int error;
     cl_platform_id platformId = nullptr;
     cl_device_id selectedDevice = nullptr;
     cl_uint numDevices;
+    cl_uint numPlatforms = 0;
 
-    CL_CALL(clGetPlatformIDs(1, &platformId, nullptr));
+    CL_CALL(clGetPlatformIDs(0, nullptr, &numPlatforms));
+    std::vector<cl_platform_id> platforms(numPlatforms);
+    CL_CALL(clGetPlatformIDs(numPlatforms, platforms.data(), nullptr));
+    std::vector<std::string> platformNames;
+    std::cout << "OpenCL platforms:" << std::endl;
+    int platformIndex = -1;
+    for (cl_uint i = 0; i < numPlatforms; ++i) {
+        std::string name = getPlatform(platforms[i]);
+        bool match = (platformIndex < 0 && platform && *platform && name == platform);
+        if (match) platformIndex = static_cast<int>(i);
+        std::cout << "    [" << (match ? "X" : " ") << "] " << name << std::endl;
+    }
+    platformId = platformIndex != -1 ? platforms[platformIndex] : platforms[0];
+
     CL_CALL(clGetDeviceIDs(platformId, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices));
 
     if (deviceId >= numDevices) {

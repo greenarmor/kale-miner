@@ -40,7 +40,7 @@ extern "C" int executeKernel(int deviceId, std::uint8_t* data, int dataSize, std
 #else
 #include <CL/cl.h>
 #endif
-extern "C" int executeKernel(int deviceId, std::uint8_t* data, int dataSize, std::uint64_t startNonce, int nonceOffset,
+extern "C" int executeKernel(const char* platform, int deviceId, std::uint8_t* data, int dataSize, std::uint64_t startNonce, int nonceOffset,
     std::uint64_t batchSize, int difficulty, int threadsPerBlock, std::uint8_t* output, std::uint64_t* validNonce, bool showDeviceInfo);
 #endif
 
@@ -158,6 +158,7 @@ int main(int argc, char* argv[]) {
     int64_t nonce = std::stoll(argv[3]);
     int difficulty = std::stoi(argv[4]);
     std::string miner = argv[5];
+    std::string platform;
 
     bool verbose = false;
     bool gpu = false;
@@ -171,6 +172,8 @@ int main(int argc, char* argv[]) {
             batchSize = std::stoll(argv[++i]);
         } else if (std::strcmp(argv[i], "--device") == 0 && i + 1 < argc) {
             deviceId = std::stoi(argv[++i]);
+        } else if (std::strcmp(argv[i], "--platform") == 0 && i + 1 < argc) {
+            platform = argv[++i];
         }  else if (std::strcmp(argv[i], "--verbose") == 0) {
             verbose = true;
         } else if (std::strcmp(argv[i], "--gpu") == 0) {
@@ -208,7 +211,7 @@ int main(int argc, char* argv[]) {
                     std::cout.flush();
                 }
                 auto gpuStartTime = std::chrono::high_resolution_clock::now();
-                int res = executeKernel(deviceId, input.data(), data.size(), currentNonce, nonceOffset,
+                int res = executeKernel(platform.empty() ? nullptr : platform.c_str(), deviceId, input.data(), data.size(), currentNonce, nonceOffset,
                                              batchSize, difficulty, maxThreads, output.data(), &validNonce, showDeviceInfo);
                 showDeviceInfo = false;
                 auto gpuEndTime = std::chrono::high_resolution_clock::now();
