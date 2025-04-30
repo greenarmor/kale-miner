@@ -72,6 +72,7 @@ async function work(mining, key, blockData, onStart) {
         batchSize,
         verbose,
         device,
+        platform,
         executable,
         continuous
     } = config.miner;
@@ -82,7 +83,7 @@ async function work(mining, key, blockData, onStart) {
             const workNonce = signers[key].work?.nonce ? signers[key].work.nonce + 1 : 0;
             const diff = workDiff || (await strategy.difficulty(key, deepCopy(blockData))) || signers[key].difficulty || difficulty || 6;
             const { work } = await mine(executable, blockData.block, blockData.hash, workNonce || nonce,
-                diff, key, maxThreads, batchSize, device, gpu, verbose, onStart);
+                diff, key, maxThreads, batchSize, platform, device, gpu, verbose, onStart);
             signers[key].work = { ...work, difficulty: diff };
             signers[key].stats.lastDiff = diff;
             signers[key].stats.minDiff = Math.min(signers[key].stats.minDiff || Number.MAX_VALUE, diff);
@@ -127,7 +128,7 @@ async function work(mining, key, blockData, onStart) {
     }
 }
 
-async function mine(minerExec, block, hash, nonce, difficulty, key, maxThreads, batchSize, device, gpu, verbose, onStart = null) {
+async function mine(minerExec, block, hash, nonce, difficulty, key, maxThreads, batchSize, platform, device, gpu, verbose, onStart = null) {
     return new Promise((resolve, reject) => {
         const args = [
             block, hash, nonce, difficulty, key,
@@ -137,6 +138,10 @@ async function mine(minerExec, block, hash, nonce, difficulty, key, maxThreads, 
         ];
         if (gpu) args.push('--gpu');
         if (verbose) args.push('--verbose');
+        if (platform) {
+            args.push('--platform');
+            args.push(platform);
+        }
 
         session.gpu = gpu;
 
