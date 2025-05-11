@@ -168,11 +168,14 @@ async function hoard() {
     if (+percent > 0 && +percent <= 100
         && code?.length && StrKey.isValidEd25519PublicKey(destination) && StrKey.isValidEd25519PublicKey(issuer)) {
         let builder;
+        let totalSent = 0;
         for (const key in signers) {
             const account = await horizon.loadAccount(key);
+            const amount = Math.floor(Number(account.balances.find(balance => balance.asset_code === code && balance.asset_issuer === issuer)?.balance || 0) * 0.01 * percent).toString();
+            totalSent += +amount;
             builder ??= new TransactionBuilder(account, { fee: fees.toString(), networkPassphrase: networkPassphrase || Networks.PUBLIC });
             builder.addOperation(Operation.payment({ destination, asset: new Asset(code, issuer),
-                amount: Math.floor(Number(account.balances.find(balance => balance.asset_code === code && balance.asset_issuer === issuer)?.balance || 0) * 0.01 * percent).toString(),
+                amount,
                 source: key }));
         }
 
@@ -189,7 +192,7 @@ async function hoard() {
         if (response.status !== 'SUCCESS') {
             throw new Error(`tx Failed: ${hash}`);
         }
-        return { hash };
+        return { hash, totalSent };
     }
 }
 
