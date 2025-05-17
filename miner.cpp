@@ -211,8 +211,13 @@ int main(int argc, char* argv[]) {
                     std::cout.flush();
                 }
                 auto gpuStartTime = std::chrono::high_resolution_clock::now();
+                #if GPU == GPU_CUDA
+                int res = executeKernel(deviceId, input.data(), data.size(), currentNonce, nonceOffset,
+                                            batchSize, difficulty, maxThreads, output.data(), &validNonce, showDeviceInfo);
+                #elif GPU == GPU_OPENCL
                 int res = executeKernel(platform.empty() ? nullptr : platform.c_str(), deviceId, input.data(), data.size(), currentNonce, nonceOffset,
                                              batchSize, difficulty, maxThreads, output.data(), &validNonce, showDeviceInfo);
+                #endif
                 showDeviceInfo = false;
                 auto gpuEndTime = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> elapsedTime = gpuEndTime - gpuStartTime;
